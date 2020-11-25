@@ -36,4 +36,4 @@ We made this project with the help of Maxime BILLETTE, Amir MESSEDI and Artemii 
 * Enjoy testing the app !
 
 ## Web address
-You can test the app [there](https://github.com/PaullouisRossignol/Airbnb_analysis)
+You can test the app [there](https://pl-r.shinyapps.io/Airbnb_analysis/)
