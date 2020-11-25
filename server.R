@@ -40,16 +40,15 @@ shinyServer(function(input, output, session) {
     max_date <- '2019-08-31'
     
     files_paths <- c()
-    # Read data in cities of every country between min_date and max_date
     for(country in countries){
         
-        citiesOfCountry <- cityCountry %>%
+        cityCountryWanted <- cityCountry %>%
             filter(country == country)
         
-        citiesOfCountry <- citiesOfCountry$city
-        citiesOfCountry <- unique(citiesOfCountry)
+        cityCountryWanted <- cityCountryWanted$city
+        cityCountryWanted <- unique(cityCountryWanted)
         
-        for(city in citiesOfCountry){
+        for(city in cityCountryWanted){
             file_dir <- file.path(".", "data_cleansed", country, city)
             file_subdirs <- list.dirs(file_dir)
             file_subdirs <- file_subdirs[-1]
@@ -69,7 +68,7 @@ shinyServer(function(input, output, session) {
     ## Preprocess
     listings$bedrooms <- ifelse(listings$bedrooms >= 5, "5+", listings$bedrooms)
     
-    multipleCities <- reactive({
+    cities_selected <- reactive({
         if(length(input$cities) > 1){
             return(TRUE)
         } else {
@@ -78,7 +77,7 @@ shinyServer(function(input, output, session) {
     })
     
     hasAggregation <- reactive({
-        if(input$aggregType == "no_aggreg" || input$aggregOn == "no_aggreg"){
+        if(input$statValue == "nostat" || input$metricBy == "nostat"){
             return(FALSE)
         } else {
             return(TRUE)
@@ -87,7 +86,6 @@ shinyServer(function(input, output, session) {
     
     data <- reactive({
         cities <- input$cities
-        
         daterange <- input$daterange
         startdate <- ymd(daterange[1])
         enddate <- ymd(daterange[2])
@@ -101,9 +99,9 @@ shinyServer(function(input, output, session) {
     
     plotLogic <- reactive({
         
-        feature <- input$feature
-        aggregType <- input$aggregType
-        aggregOn <- input$aggregOn
+        metric <- input$metric
+        statValue <- input$statValue
+        metricBy <- input$metricBy
         plotType <- input$plotType
         isGrouped <- input$isGrouped
         binwidth <- input$binwidth
@@ -111,40 +109,38 @@ shinyServer(function(input, output, session) {
         # basic plot without aggregation
         if(!hasAggregation()){
             # place the data inside the plot
-            p <- ggplot(data(), aes_string(feature))
+            p <- ggplot(data(), aes_string(metric))
         }
         # If it has an aggregation
         else {
             aggreg_data <- data() %>%
-                group_by(!!aggregOn := get(aggregOn), city)
+                group_by(!!metricBy := get(metricBy), city)
             
-            p <- switch (aggregType,
-                 "no_aggreg" = return(NULL),
+            p <- switch (statValue,
+                 "nostat" = return(NULL),
                  
                  "total" = {
                      total_data <- aggreg_data %>%
-                         summarise(total = sum(get(feature), na.rm = TRUE), .groups = 'drop')
+                         summarise(total = sum(get(metric), na.rm = TRUE), .groups = 'drop')
                      
-                     plot <- ggplot(total_data, aes(y = total, x=get(aggregOn)))
+                     plot <- ggplot(total_data, aes(y = total, x=get(metricBy)))
                  },
-                 
                  "average" = {
                      avg_data = aggreg_data %>%
-                         summarise(average = mean(get(feature), na.rm = TRUE), .groups = 'drop')
+                         summarise(average = mean(get(metric), na.rm = TRUE), .groups = 'drop')
                      
-                     plot <- ggplot(avg_data, aes(y = average, x=get(aggregOn)))
+                     plot <- ggplot(avg_data, aes(y = average, x=get(metricBy)))
                  },
-                 
                  "median" = {
                      median_data = aggreg_data %>%
-                         summarise(median = median(get(feature), na.rm = TRUE), .groups = 'drop')
+                         summarise(median = median(get(metric), na.rm = TRUE), .groups = 'drop')
                      
-                     plot <- ggplot(median_data, aes(y = median, x=get(aggregOn)))
+                     plot <- ggplot(median_data, aes(y = median, x=get(metricBy)))
                  })
         }
         
         # determining if we plot with a facet for each city or not
-        if(!isGrouped && multipleCities()){
+        if(!isGrouped && cities_selected()){
             p <- p + facet_wrap(.~city, ncol=1)
         }
         
@@ -152,11 +148,11 @@ shinyServer(function(input, output, session) {
         if(!hasAggregation()){
             
             #scaling if necessary
-            if(feature == "revenue_30"){
+            if(metric == "revenue_30"){
                 p <- p + scale_x_continuous(limits = quantile(data()$revenue_30, c(0.1, 0.9), na.rm = TRUE))
             }
             #scaling if necessary
-            if(feature == "price_30"){
+            if(metric == "price_30"){
                 p <- p + scale_x_continuous(limits = quantile(data()$price_30, c(0.1, 0.9), na.rm = TRUE))
             }
             
@@ -167,10 +163,6 @@ shinyServer(function(input, output, session) {
                 
                 "histogram" = {
                     geom_histogram(binwidth = binwidth, aes(fill = city))
-                },
-                
-                "barplot" = {
-                    geom_bar(aes(fill = city))
                 })
         } else {
             p <- p + switch(plotType,
@@ -179,40 +171,36 @@ shinyServer(function(input, output, session) {
                 },
                 
                 "histogram" = {
-                    geom_histogram(stat='identity', aes_string(fill=aggregOn))
-                },
-                
-                "barplot" = {
-                    geom_bar(stat='identity', aes_string(fill=aggregOn))
+                    geom_histogram(stat='identity', aes_string(fill=metricBy))
                 })
         }
         # add the labels
-        p <- p + switch(feature,
-            "no_feature" = return(NULL),
+        p <- p + switch(metric,
+            "no_metric" = return(NULL),
             "availability_30" = xlab("Availability over the last 30 days"),
             "revenue_30" = xlab("Revenue over the last 30 days"),
             "price_30" = xlab("Price"))
         
         # Adding the final title
-        featureTitle <- switch (feature,
+        metricTitle <- switch (metric,
             "availability_30" = "Availability over the last 30 days",
             "revenue_30" = "Revenue over the last 30 days",
             "price_30" = "Price")
         
-        p <- p + ggtitle(label = paste(featureTitle))
+        p <- p + ggtitle(label = paste(metricTitle))
 
         p
     })
     
     plot1 <- reactive({
-        if(multipleCities()){
+        if(cities_selected()){
             plotLogic()
         } else {
             return(NULL)
         }
     })
     plot2 <- reactive({
-        if(multipleCities() || is.null(input$cities)){
+        if(cities_selected() || is.null(input$cities)){
             return(NULL)
         } else {
             plotLogic()
@@ -220,20 +208,20 @@ shinyServer(function(input, output, session) {
     })
     
     dataToPlot <- reactive({
-        feature <- input$feature
+        metric <- input$metric
         top <- input$top
 
         dt <- data() %>%
-                arrange(desc((!!as.name(feature)))) %>%
+                arrange(desc((!!as.name(metric)))) %>%
                 head(top)
     }) 
     
     map <- reactive({
-        if(multipleCities() || is.null(input$cities)){
+        if(cities_selected() || is.null(input$cities)){
             return(NULL)
         } else {
-            feature = input$feature
-            if(feature == "no_feature"){
+            metric = input$metric
+            if(metric == "no_metric"){
                 return(NULL)
             }
             else{
@@ -245,7 +233,7 @@ shinyServer(function(input, output, session) {
                     addMarkers(lng = dt$longitude, lat = dt$latitude,
                                label = paste0("long : ", dt$longitude, " - ",
                                              "lat : ", dt$latitude, " - ",
-                                             feature, " : ", dt[[feature]])) 
+                                             metric, " : ", dt[[metric]])) 
             }
         }
     })

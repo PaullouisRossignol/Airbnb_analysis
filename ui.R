@@ -15,20 +15,20 @@ shinyUI(fluidPage(
             
             h3("Display data"),
             
-            selectInput("feature", "Metric :",
-                        c("-" = "no_feature",
+            selectInput("metric", "Metric :",
+                        c("-" = "no_metric",
                           "Availability for the next 30 days" = "availability_30",
                           "Revenue for the next 30 days" = "revenue_30",
                           "Price for the next 30 days" = "price_30")),
             
-            selectInput("aggregType", "Statistic value:",
-                        c("-" = "no_aggreg",
+            selectInput("statValue", "Statistic value:",
+                        c("-" = "nostat",
                           "Total" = "total",
                           "Average" = "average",
                           "Median" = "median")),
             
-            selectInput("aggregOn", "Metric by:",
-                        c("-" = "no_aggreg",
+            selectInput("metricBy", "Metric by:",
+                        c("-" = "nostat",
                           "Room Type" = "room_type",
                           "Number of bedrooms" = "bedrooms")),
             
@@ -43,8 +43,7 @@ shinyUI(fluidPage(
             h3("Plot options"),
             selectInput("plotType", "Plot Type :",
                         c("Boxplot" = "boxplot",
-                          "Histogram" = "histogram",
-                          "Barplot" = "barplot")),
+                          "Histogram" = "histogram")),
             
             sliderInput("binwidth", "Bin width :",
                         min = 1, max = 200, value = 50
