@@ -1,0 +1,74 @@
+R Project
+========================================================
+author: Jean Prouvost, Paul-Louis Rossignol, Daniel Marin
+date: 
+autosize: true
+css:uiui.css
+
+Project Presentation
+========================================================
+This project is based on data gathered from the Airbnb API. For this project, we chose to study France neighbouring countries for their attractivity as France surrogate as european tourism leader: 
+
+-Allemagne
+
+-Espagne
+
+-Italie
+
+Application's User Interface
+========================================================
+<center>
+![](img/UI_application.png)
+</center>
+
+Destination choices
+========================================================
+<center>
+![](img/country_choice.png)
+</center>
+<center>
+<p>
+Here, the user can choose which cities to compare amongst a variety of spanish, italian and german cities.
+</p>
+</center>
+Data display options
+========================================================
+<center>
+![](img/data_display_choice.png)
+</center>
+<center>
+<p>
+The application gives multiple options of statistical data to display for the user. It's also here that the user chooses which metric to display.
+</p>
+</center>
+Plot Options
+========================================================
+<center>
+![](img/plot_options.png)
+</center>
+<center>
+<p>
+In the final option menu, the user decides which type of plot to display and some display options.
+</p>
+</center>
+
+Comparing Cities
+========================================================
+<center>
+![](img/comparing_cities.png)
+</center>
+<center>
+<p>
+You can see here an example of comparaison for several cities (Berlin, Munich, Valencia) on Revenue over 30 days.
+</p>
+</center>
+Deep dive on a city
+========================================================
+<center>
+![](img/deep_dive_city_2.png)
+</center>
+<center>
+<p>
+At last, the deep dive display allows the user to observe a map distribution of the rentals and a graph filled with the desired metric.
+</p>
+</center>
